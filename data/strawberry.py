@@ -18,8 +18,8 @@ else:
     import xml.etree.ElementTree as ET
 
 STRAWBERRY_ROOT = osp.join(HOME, "data/strawberry/")
-STRAWBERRY_CLASSES = (  # always index 0
-    'strawberry')
+STRAWBERRY_CLASSES = [  # always index 0
+    'strawberry']
 
 # note: if you used our download scripts, this should be right
 
@@ -74,21 +74,22 @@ class strawberryAnnotationTransform(object):
             	res += [bndbox]  # [xmin, ymin, xmax, ymax, label_ind]
             else: # For LabelMe tool
                 polygons = obj.find('polygon')
+                
                 x = []
                 y = []
-                bnbnox = []
+                bnbbox = []
                 for polygon in polygons.iter('pt'):
                     # Scale height or width
                     x.append(int(polygon.find('x').text)/width)
                     y.append(int(polygon.find('y').text)/height)
                 bnbbox.append(min(x))
                 bnbbox.append(min(y))
-                bnbnox.append(max(x))
+                bnbbox.append(max(x))
                 bnbbox.append(max(y))
                 label_idx = self.class_to_ind[name]
                 bnbbox.append(label_idx)
                 res += [bnbbox] # [xmin, ymin, xmax, ymax, label_ind]
-
+            
         return res  # [[xmin, ymin, xmax, ymax, label_ind], ... ]
 
 
@@ -119,7 +120,7 @@ class StrawberryDetection(data.Dataset):
         self.target_transform = target_transform
         self.name = dataset_name
         self._annopath = osp.join('%s', 'Annotations', '%s.xml')
-        self._imgpath = osp.join('%s', 'JPEGImages', '%s.jpg')
+        self._imgpath = osp.join('%s', 'Images', '%s.jpg')
         self.ids = list()
         for name in image_sets:
             rootpath = osp.join(self.root)
@@ -139,6 +140,7 @@ class StrawberryDetection(data.Dataset):
 
         target = ET.parse(self._annopath % img_id).getroot()
         img = cv2.imread(self._imgpath % img_id)
+        
         height, width, channels = img.shape
 
         if self.target_transform is not None:
@@ -146,6 +148,8 @@ class StrawberryDetection(data.Dataset):
 
         if self.transform is not None:
             target = np.array(target)
+            
+            
             img, boxes, labels = self.transform(img, target[:, :4], target[:, 4])
             # to rgb
             img = img[:, :, (2, 1, 0)]
